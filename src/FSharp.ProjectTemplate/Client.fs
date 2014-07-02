@@ -60,17 +60,21 @@ type ClientConnection (config) =
     |> ignore
 
   member this.Connect() = 
-    let workflow = async {
+    let readInbound = async {
         let! msg = Async.AwaitTask(inbound.ReadLineAsync())
         msg
         |> inboundEvent.Trigger
         |> ignore
       }
+    let readLoop = async { while true do Async.RunSynchronously readInbound }
     openConnection()
     pingPong()
     sprintf "USER %s 0 * :%s" config.User config.User |> sendMessage outbound
     sprintf "NICK %s" config.Nick |> sendMessage outbound
-    while true do
-      Async.RunSynchronously workflow
+    Async.StartAsTask readLoop
      
   member this.InboundMessages = inboundEventStream
+
+  member this.Join channel = 
+    sprintf "JOIN %s" channel
+    |> sendMessage outbound

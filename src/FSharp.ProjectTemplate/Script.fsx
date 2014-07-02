@@ -21,3 +21,5 @@ client.InboundMessages
 |> Observable.subscribe (printfn "%s")
 
 client.Connect()
+
+client.Join("#fsharp")
